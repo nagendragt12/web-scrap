@@ -1,5 +1,3 @@
-import requests
-from bs4 import BeautifulSoup
 import json
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -8,7 +6,12 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+from bs4 import BeautifulSoup
 import pandas as pd
+import logging
+
+# Set the logging level to suppress INFO messages
+logging.getLogger('selenium').setLevel(logging.WARNING)
 
 # Selenium setup
 options = Options()
@@ -27,8 +30,8 @@ driver.get(url)
 
 # Wait for the restaurant cards to be present
 try:
-    restaurant_cards = WebDriverWait(driver, 20).until(
-        EC.presence_of_all_elements_located((By.XPATH, '//div[contains(@class, "restaurant-card")]'))
+    WebDriverWait(driver, 30).until(
+        EC.presence_of_all_elements_located((By.XPATH, '//div[contains(@class, "ant-row")]'))
     )
 except Exception as e:
     print("Error: ", e)
@@ -40,26 +43,25 @@ except Exception as e:
 soup = BeautifulSoup(driver.page_source, 'html.parser')
 
 # Find all restaurant blocks
-restaurant_blocks = soup.find_all('div', class_='restaurant-card')
+restaurant_blocks = soup.find_all('div', class_='ant-row')
 
 # List to store restaurant data
 restaurants = []
 
 for block in restaurant_blocks[:20]:  # Ensure we only process the first 20 restaurants
     restaurant = {}
-    
+
     # Extract restaurant details
-    name = block.find('div', class_='basicInfoRow___UZM8d cuisine___T2tCh')  # Update class name if different
-    cuisine = block.find('div', class_='cuisine___3EYoO')  # Update class name if different
-    rating = block.find('div', class_='medium___3F_Er ratingStar infoItemIcon___23Zvv')  # Update class name if different
-    delivery_time = block.find('div', class_='name___2epcT')  # Update class name if different
-    distance = block.find('div', class_='numbersChild___2qKMV')  # Update class name if different
-    promo = block.find('div', class_='promo___3T8SF')  # Update class name if different
-    notice = block.find('div', class_='discountText___GQCkj')  # Update class name if different
-    image = block.find('img', class_='logoLink___3M4kI')  # Update class name if different
-    latlng = block.find('div', class_='latlng___3Fv7G')  # Update class name if different
-    delivery_fee = block.find('div', class_='discountText___GQCkj')  # Update class name if different
-    
+    name = block.find('div', {'data-testid': 'merchant-name'})
+    cuisine = block.find('div', {'data-testid': 'merchant-cuisine'})
+    rating = block.find('div', {'data-testid': 'merchant-rating'})
+    delivery_time = block.find('div', {'data-testid': 'merchant-delivery-time'})
+    distance = block.find('div', {'data-testid': 'merchant-distance'})
+    promo = block.find('div', {'data-testid': 'merchant-promo'})
+    notice = block.find('div', {'data-testid': 'merchant-notice'})
+    image = block.find('img', {'data-testid': 'merchant-logo'})
+    delivery_fee = block.find('div', {'data-testid': 'merchant-delivery-fee'})
+
     restaurant['name'] = name.text.strip() if name else None
     restaurant['cuisine'] = cuisine.text.strip() if cuisine else None
     restaurant['rating'] = rating.text.strip() if rating else None
@@ -69,9 +71,6 @@ for block in restaurant_blocks[:20]:  # Ensure we only process the first 20 rest
     restaurant['is_promo_available'] = True if promo else False
     restaurant['notice'] = notice.text.strip() if notice else None
     restaurant['image_link'] = image['src'] if image else None
-    restaurant['id'] = block['data-restaurant-id'] if 'data-restaurant-id' in block.attrs else None
-    restaurant['latitude'] = latlng['data-lat'] if latlng else None
-    restaurant['longitude'] = latlng['data-lng'] if latlng else None
     restaurant['delivery_fee'] = delivery_fee.text.strip() if delivery_fee else None
 
     # Add specific locations
