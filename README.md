@@ -21,6 +21,9 @@ Save the extracted data in gzip of ndjson format.
 Execution Steps Locally
 
 1.Clone the repository.
+```
+https://github.com/nagendragt12/web-scrap/tree/main
+```
 
 2.Required Dependencies
 
