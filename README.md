@@ -1,6 +1,6 @@
 # Web Scraper Project for Grab Food Delivery
 
-(your website was updated, some of the field are not availabal.so in the same pages there chase  to other pages )
+
 
 
 Overview
